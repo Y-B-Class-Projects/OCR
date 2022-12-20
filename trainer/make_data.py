@@ -1,4 +1,7 @@
 import os
+
+import cv2
+import numpy as np
 import rstr
 import pandas as pd
 
@@ -7,7 +10,9 @@ from trdg.generators import (
     GeneratorFromStrings,
 )
 
-image_count = 1000
+from tools import thresholding
+
+image_count = 10
 val_percent = 0.2
 
 
@@ -26,7 +31,12 @@ def create_data(count, dir_path, generator):
         image, words = generator.next()
         file_name = str(i).zfill(5) + '.png'
         file_path = os.path.join(dir_path, file_name)
-        image.save(file_path)
+        image = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2GRAY)
+        image = cv2.GaussianBlur(src=image, ksize=(3, 3), sigmaX=0, sigmaY=0)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12, 12))
+        image = clahe.apply(image)
+        _, image = cv2.threshold(image, thresh=165, maxval=255, type=cv2.THRESH_TRUNC + cv2.THRESH_OTSU)
+        cv2.imwrite(file_path, image)
         df = df.append({'filename': file_name, 'words': words}, ignore_index=True)
 
     df.to_csv(dir_path + '/labels.csv', index=False)

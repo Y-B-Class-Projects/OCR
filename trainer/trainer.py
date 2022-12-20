@@ -1,4 +1,6 @@
 import os
+from multiprocessing import freeze_support
+
 import torch.backends.cudnn as cudnn
 import yaml
 from train import train
@@ -29,5 +31,7 @@ def get_config(file_path):
     return opt
 
 
-opt = get_config("config_files/en_filtered_config.yaml")
-train(opt, amp=False)
+if __name__ == '__main__':
+    freeze_support()
+    opt = get_config("config_files/en_filtered_config.yaml")
+    train(opt, amp=False)

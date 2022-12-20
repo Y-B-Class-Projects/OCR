@@ -98,12 +98,6 @@ def process_image(image_path):
         image = cv2.resize(image, (new_width, new_height))
         rotation_angle = deskew(image)
         image = imutils.rotate(image, angle=rotation_angle)
-        image = cv2.copyMakeBorder(src=image,top=20,
-            bottom=20,
-            left=20,
-            right=20,
-            borderType=cv2.BORDER_CONSTANT,
-            value=(255, 255, 255))
         gray = get_grayscale(image)
         thresh = thresholding(gray)
 
