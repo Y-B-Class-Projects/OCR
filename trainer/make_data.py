@@ -12,7 +12,7 @@ from trdg.generators import (
 
 from tools import thresholding
 
-image_count = 10
+image_count = 30000
 val_percent = 0.2
 
 
