@@ -1,5 +1,8 @@
 import os
+import random
 
+import imgaug as ia
+from imgaug import augmenters as iaa
 import cv2
 import numpy as np
 import rstr
@@ -31,7 +34,26 @@ def create_data(count, dir_path, generator):
         image, words = generator.next()
         file_name = str(i).zfill(5) + '.png'
         file_path = os.path.join(dir_path, file_name)
-        image = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2GRAY)
+        image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+
+        image_np = np.asarray(image)
+        # Define the list of augmentations to apply
+        augmentations = [
+            iaa.Resize({"height": (0.5, 1.0), "width": (0.5, 1.0)}),
+            iaa.Cutout(nb_iterations=1, fill_mode="constant", cval=255, size=0.1),
+            iaa.Dropout(p=(0, 0.05)),  # randomly set pixels to zero
+            iaa.GaussianBlur(sigma=(0, 0.5)),  # blur images
+            iaa.AdditiveGaussianNoise(scale=(0, 0.05 * 255)),  # add Gaussian noise with a scale of 0 to 0.5*255
+            iaa.Rotate(rotate=(-5, 5), fit_output=True),  # rotate the image by an angle ranging from -45 to 45 degrees
+            iaa.PerspectiveTransform(scale=(0.01, 0.05), keep_size=False),
+            iaa.Multiply(mul=(0.5, 1.5))  # multiply the image by a value ranging from 0.5 to 1.5
+        ]
+
+        # Define an imgaug augmentation pipeline using the list of augmentations
+        seq = iaa.Sequential(augmentations)
+        augmented_image = seq.augment_image(image_np)
+        image = cv2.cvtColor(augmented_image, cv2.COLOR_RGB2GRAY)
+
         image = cv2.GaussianBlur(src=image, ksize=(3, 3), sigmaX=0, sigmaY=0)
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12, 12))
         image = clahe.apply(image)
