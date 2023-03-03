@@ -1,5 +1,5 @@
 number: '0123456789'
-symbol: "()-.: "
+symbol: "( )-.:"
 lang_char: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 experiment_name: 'en_filtered'
 train_data: 'all_data'
@@ -7,9 +7,9 @@ valid_data: 'all_data/test'
 manualSeed: 1111
 workers: 1
 batch_size: 32 #32
-num_iter: 50000
+num_iter: 25000
 valInterval: 2000
-saved_model: '' #'saved_models/en_filtered/iter_300000.pth'
+saved_model: '' # 'saved_models/en_filtered/english_g2.pth'
 FT: False
 optim: False # default is Adadelta
 lr: 1.

@@ -7,12 +7,14 @@ import cv2
 import numpy as np
 import rstr
 import pandas as pd
+from scipy.stats._multivariate import random_correlation_gen
 
 from trdg.generators import (
     GeneratorFromRandom,
     GeneratorFromStrings,
 )
 
+import tools
 from tools import thresholding
 
 image_count = 30000
@@ -24,8 +26,18 @@ def create_strings():
 
 
 def random_string():
-    reg_s = r"([0-9][0-9])(([A-Z][A-Z]?-)|(-[A-Z]([0-9]|[A-Z])))(([0-9][0-9][0-9][0-9])|([0-9][0-9][0-9]\.[0-9][0-9]))"
-    return rstr.xeger(reg_s)
+    plate = r"(\d{2}[A-Z]-\d{3}\.\d{2})|" \
+            r"(\d{2}[A-Z]{2}-\d{3}\.\d{2})|" \
+            r"(\d{2}-[A-Z]\d{4}\.\d{2})|" \
+            r"(\d{2}-[A-Z]{2}\d{3}\.\d{2})|" \
+            r"(\d{2}[A-Z]-\d{3})|" \
+            r"(\d{2}[A-Z]{2}-\d{3})|" \
+            r"(\d{2}-[A-Z]\d{5})|" \
+            r"(\d{2}-[A-Z]{2}\d{4})|" \
+            r"(\d{2}[A-Z]\d-\d{4})|" \
+            r"(\d{2}[A-Z]\d-\d{3}\.\d{2})"
+
+    return rstr.xeger(plate)
 
 
 def create_data(count, dir_path, generator):
@@ -39,27 +51,23 @@ def create_data(count, dir_path, generator):
         image_np = np.asarray(image)
         # Define the list of augmentations to apply
         augmentations = [
-            iaa.Resize({"height": (0.5, 1.0), "width": (0.5, 1.0)}),
-            iaa.Cutout(nb_iterations=1, fill_mode="constant", cval=255, size=0.1),
-            iaa.Dropout(p=(0, 0.05)),  # randomly set pixels to zero
-            iaa.GaussianBlur(sigma=(0, 0.5)),  # blur images
-            iaa.AdditiveGaussianNoise(scale=(0, 0.05 * 255)),  # add Gaussian noise with a scale of 0 to 0.5*255
-            iaa.Rotate(rotate=(-5, 5), fit_output=True),  # rotate the image by an angle ranging from -45 to 45 degrees
-            iaa.PerspectiveTransform(scale=(0.01, 0.05), keep_size=False),
+            iaa.Resize({"height": (0.8, 1.0), "width": (0.5, 1.0)}),
+            iaa.Cutout(nb_iterations=1, fill_mode="constant", cval=255, size=0.05),
+            iaa.Dropout(p=(0, 0.01)),  # randomly set pixels to zero
+            iaa.GaussianBlur(sigma=(0.0, 1.5)),  # blur images
+            iaa.AdditiveGaussianNoise(scale=(0, 0.01 * 255)),  # add Gaussian noise with a scale of 0 to 0.5*255
+            iaa.PerspectiveTransform(scale=(0.01, 0.03)),
             iaa.Multiply(mul=(0.5, 1.5))  # multiply the image by a value ranging from 0.5 to 1.5
         ]
 
         # Define an imgaug augmentation pipeline using the list of augmentations
         seq = iaa.Sequential(augmentations)
         augmented_image = seq.augment_image(image_np)
-        image = cv2.cvtColor(augmented_image, cv2.COLOR_RGB2GRAY)
+        if random.random() <= 0.5:
+            augmented_image = cv2.cvtColor(augmented_image, cv2.COLOR_BGR2GRAY)
 
-        image = cv2.GaussianBlur(src=image, ksize=(3, 3), sigmaX=0, sigmaY=0)
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12, 12))
-        image = clahe.apply(image)
-        _, image = cv2.threshold(image, thresh=165, maxval=255, type=cv2.THRESH_TRUNC + cv2.THRESH_OTSU)
-        cv2.imwrite(file_path, image)
-        df = df.append({'filename': file_name, 'words': words}, ignore_index=True)
+        cv2.imwrite(file_path, augmented_image)
+        df.loc[len(df.index)] = [file_name, words]
 
     df.to_csv(dir_path + '/labels.csv', index=False)
 
@@ -79,15 +87,16 @@ if not os.path.exists(val_dir):
 data_generator = GeneratorFromStrings(strings=create_strings(),
                                       fonts=fonts_dir,
                                       image_dir='background',
-                                      background_type=4,  # 4 for ages
                                       skewing_angle=5,
                                       random_blur=False,
                                       random_skew=True,
-                                      distorsion_type=0,  # Random
+                                      distorsion_type=0,
+                                      background_type=3,
                                       count=image_count,
-                                      size=64,
+                                      size=100,
                                       character_spacing=0,
-                                      fit=True)
+                                      margins=(10, 10, 10, 10),
+                                      text_color="#2d3238")
 
 create_data(int(image_count * (1 - val_percent)), data_dir, data_generator)
 create_data(int(image_count * val_percent), val_dir, data_generator)

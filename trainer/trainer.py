@@ -34,4 +34,4 @@ def get_config(file_path):
 if __name__ == '__main__':
     freeze_support()
     opt = get_config("config_files/en_filtered_config.yaml")
-    train(opt, amp=False)
+    train(opt, amp=True)
