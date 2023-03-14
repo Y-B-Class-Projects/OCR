@@ -4,6 +4,7 @@ import numpy as np
 from skimage.filters import gaussian, threshold_otsu
 from skimage.feature import canny
 from skimage.transform import probabilistic_hough_line, rotate
+from easyocr_imp import EasyOCR
 
 
 # get grayscale image
@@ -17,9 +18,32 @@ def remove_noise(image):
     return cv2.medianBlur(image, 5)
 
 
+def remove_red(image):
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    min_s = [0, 25, 50]
+    rets = []
+    for s in min_s:
+        lower_red1 = np.array([0, s, 50])
+        upper_red1 = np.array([10, 255, 255])
+        lower_red2 = np.array([150, s, 50])
+        upper_red2 = np.array([180, 255, 255])
+        mask = cv2.inRange(hsv, lower_red1, upper_red1)
+        mask = cv2.bitwise_not(mask)
+        mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
+        mask2 = cv2.bitwise_not(mask2)
+        mask3 = cv2.bitwise_and(mask, mask2)
+        image_temp = image.copy()
+        image_temp[mask3 == 0] = (218, 211, 194)
+        image_temp = cv2.cvtColor(image_temp, cv2.COLOR_BGR2GRAY)
+        _, image_temp = cv2.threshold(image_temp, 200, 255, cv2.THRESH_OTSU)
+        rets.append(image_temp)
+
+    return rets
+
+
 # thresholding
 def thresholding(image):
-    return cv2.threshold(image, 249, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+    return cv2.threshold(image, 120, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
 
 
 # dilation
@@ -90,10 +114,12 @@ def match_template(image, template):
 
 def process_image(image_path):
     image_path = image_path.lower()
-    if image_path.endswith('.tif') or image_path.endswith('.png') or image_path.endswith('.jpg') or image_path.endswith('.jpeg'):
+    if image_path.endswith('.tif') or image_path.endswith('.png') or image_path.endswith('.jpg') or image_path.endswith(
+            '.jpeg'):
         image = cv2.imread(image_path)
+        image = cut_image(image)
         height, width, channels = image.shape
-        new_width = 640  # pixels
+        new_width = 500  # pixels
         new_height = int(height * (new_width / width))
         image = cv2.resize(image, (new_width, new_height))
         rotation_angle = deskew(image)
@@ -105,3 +131,38 @@ def process_image(image_path):
     else:
         print('Invalid image format')
         return None, None, None
+
+
+def cut_image(image):
+    e_ocr = EasyOCR(['en'], rec_network='best_accuracy')
+    min_x, min_y, max_x, max_y = image.shape[0], image.shape[1], 0, 0
+    boxs = e_ocr.get_boxes(image)
+    for box in boxs:
+        all_x = [point[0] for point in box]
+        all_y = [point[1] for point in box]
+        min_x = min(min_x, min(all_x))
+        min_y = min(min_y, min(all_y))
+        max_x = max(max_x, max(all_x))
+        max_y = max(max_y, max(all_y))
+
+    min_x = int(min_x) - 2
+    min_y = int(min_y) - 2
+    max_x = int(max_x) + 2
+    max_y = int(max_y) + 2
+
+    min_x = max(min_x, 0)
+    min_y = max(min_y, 0)
+    max_x = min(max_x, image.shape[1])
+    max_y = min(max_y, image.shape[0])
+
+    image_with = 900
+    image_height = int(image_with * (max_y - min_y) / (max_x - min_x))
+
+    pts1 = np.float32([[min_x, min_y], [min_x, max_y], [max_x, min_y], [max_x, max_y]])
+    pts2 = np.float32([[0, 0], [0, image_height], [image_with, 0], [image_with, image_height]])
+
+    # Apply Perspective Transform Algorithm
+    matrix = cv2.getPerspectiveTransform(pts1, pts2)
+    image_new = cv2.warpPerspective(image, matrix, (image_with, image_height))
+
+    return image_new
