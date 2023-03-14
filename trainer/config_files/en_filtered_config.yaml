@@ -1,15 +1,15 @@
-number: "0123456789"
-symbol: "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ €"
-lang_char: ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
+number: '0123456789'
+symbol: "()-.: "
+lang_char: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 experiment_name: 'en_filtered'
-train_data: 'data'
-valid_data: 'data/test'
+train_data: 'all_data'
+valid_data: 'all_data/test'
 manualSeed: 1111
 workers: 1
-batch_size: 16 #32
-num_iter: 100000
-valInterval: 1000
-saved_model: 'saved_models/en_filtered/english_g2.pth'
+batch_size: 32 #32
+num_iter: 50000
+valInterval: 2000
+saved_model: '' #'saved_models/en_filtered/iter_300000.pth'
 FT: False
 optim: False # default is Adadelta
 lr: 1.

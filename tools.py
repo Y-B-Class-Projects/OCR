@@ -1,32 +1,10 @@
-import datetime
-
 import cv2
 import imutils
 import numpy as np
-from PIL import Image
 from skimage.filters import gaussian, threshold_otsu
 from skimage.feature import canny
 from skimage.transform import probabilistic_hough_line, rotate
-import cupy as cp
-
 from easyocr_imp import EasyOCR
-
-
-class Singleton(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-
-class OCRInstances(metaclass=Singleton):
-    def __init__(self):
-        self.instances = EasyOCR(['en'], rec_network='best_accuracy')
-
-    def get_instances(self):
-        return self.instances
 
 
 # get grayscale image
@@ -41,11 +19,8 @@ def remove_noise(image):
 
 
 def remove_red(image):
-    common_pixel = find_most_common_pixel(image)
-    common_pixel.reverse()
-
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    min_s = [50]
+    min_s = [0, 25, 50]
     rets = []
     for s in min_s:
         lower_red1 = np.array([0, s, 50])
@@ -58,9 +33,9 @@ def remove_red(image):
         mask2 = cv2.bitwise_not(mask2)
         mask3 = cv2.bitwise_and(mask, mask2)
         image_temp = image.copy()
-        image_temp[mask3 == 0] = common_pixel
+        image_temp[mask3 == 0] = (218, 211, 194)
         image_temp = cv2.cvtColor(image_temp, cv2.COLOR_BGR2GRAY)
-        # _, image_temp = cv2.threshold(image_temp, 200, 255, cv2.THRESH_OTSU)
+        _, image_temp = cv2.threshold(image_temp, 200, 255, cv2.THRESH_OTSU)
         rets.append(image_temp)
 
     return rets
@@ -139,87 +114,55 @@ def match_template(image, template):
 
 def process_image(image_path):
     image_path = image_path.lower()
-    ret = []
     if image_path.endswith('.tif') or image_path.endswith('.png') or image_path.endswith('.jpg') or image_path.endswith(
             '.jpeg'):
         image = cv2.imread(image_path)
         image = cut_image(image)
         height, width, channels = image.shape
-        new_width = 516  # pixels
+        new_width = 500  # pixels
         new_height = int(height * (new_width / width))
         image = cv2.resize(image, (new_width, new_height))
+        rotation_angle = deskew(image)
+        image = imutils.rotate(image, angle=rotation_angle)
         gray = get_grayscale(image)
+        thresh = thresholding(gray)
 
-        ret.append(image)
-        ret.append(gray)
-        # ret.append(thresholding(gray))
-        ret += remove_red(image)
-
-    return ret
+        return image, gray, thresh
+    else:
+        print('Invalid image format')
+        return None, None, None
 
 
 def cut_image(image):
-    e_ocr = OCRInstances().get_instances()
-    height, width, _ = image.shape
+    e_ocr = EasyOCR(['en'], rec_network='best_accuracy')
+    min_x, min_y, max_x, max_y = image.shape[0], image.shape[1], 0, 0
+    boxs = e_ocr.get_boxes(image)
+    for box in boxs:
+        all_x = [point[0] for point in box]
+        all_y = [point[1] for point in box]
+        min_x = min(min_x, min(all_x))
+        min_y = min(min_y, min(all_y))
+        max_x = max(max_x, max(all_x))
+        max_y = max(max_y, max(all_y))
 
-    boxs = e_ocr.get_boxes(image)  # Convert cupy array to numpy array for easyocr
-    all_points = np.array(boxs).reshape(-1, 8)
-    # Get the minimum and maximum x and y coordinates
-    min_x = int(max(np.min(all_points[:, [0, 2, 4, 6]]) - 2, 0))
-    min_y = int(max(np.min(all_points[:, [1, 3, 5, 7]]) - 2, 0))
-    max_x = int(min(np.max(all_points[:, [0, 2, 4, 6]]) + 2, width))
-    max_y = int(min(np.max(all_points[:, [1, 3, 5, 7]]) + 2, height))
+    min_x = int(min_x) - 2
+    min_y = int(min_y) - 2
+    max_x = int(max_x) + 2
+    max_y = int(max_y) + 2
 
-    image_new = image[min_y:max_y, min_x:max_x]
+    min_x = max(min_x, 0)
+    min_y = max(min_y, 0)
+    max_x = min(max_x, image.shape[1])
+    max_y = min(max_y, image.shape[0])
+
+    image_with = 900
+    image_height = int(image_with * (max_y - min_y) / (max_x - min_x))
+
+    pts1 = np.float32([[min_x, min_y], [min_x, max_y], [max_x, min_y], [max_x, max_y]])
+    pts2 = np.float32([[0, 0], [0, image_height], [image_with, 0], [image_with, image_height]])
+
+    # Apply Perspective Transform Algorithm
+    matrix = cv2.getPerspectiveTransform(pts1, pts2)
+    image_new = cv2.warpPerspective(image, matrix, (image_with, image_height))
 
     return image_new
-
-
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-
-def show_image(image):
-    img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    im_pil = Image.fromarray(img)
-    im_pil.show()
-
-
-def find_most_common_pixel(image):
-    histogram = {}  # Dictionary keeps count of different kinds of pixels in image
-
-    img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image = Image.fromarray(img)
-
-    for x in range(image.width):
-        for y in range(image.height):
-            pixel_val = get_pixel_value(image.getpixel((x, y)))
-            if pixel_val in histogram:
-                histogram[pixel_val] += 1  # Increment count
-            else:
-                histogram[pixel_val] = 1  # pixel_val encountered for the first time
-
-    mode_pixel_val = max(histogram, key=histogram.get)  # Find pixel_val whose count is maximum
-    return get_rgb_values(mode_pixel_val)  # Returna a list containing RGB Value of the median pixel
-
-
-def get_rgb_values(pixel_value):
-    red = pixel_value % 256
-    pixel_value //= 256
-    green = pixel_value % 256
-    pixel_value //= 256
-    blue = pixel_value
-    return [red, green, blue]
-
-
-def get_pixel_value(pixel):
-    return pixel[0] + 256 * pixel[1] + 256 * 256 * pixel[2]
-
