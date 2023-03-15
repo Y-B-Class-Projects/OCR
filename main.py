@@ -7,9 +7,6 @@ from tools import *
 
 
 def main():
-
-
-
     config = '--oem 1 --psm 6'
     plate = r"^.*([0-9][0-9])(([A-Z][A-Z]?-)|(-[A-Z]([0-9]|[A-Z])))(([0-9][0-9][0-9][0-9])|([0-9][0-9][0-9]\.[0-9][0-9]))"
     capacity_format = '^.*(Capacity)|(tích)'
@@ -31,21 +28,9 @@ def main():
 
 
 if __name__ == '__main__':
-    # pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-    # main()
+    pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+    main()
 
-    import re
-
-    pattern = r"^[A-Z]{2}\d{4,5}$"
-
-    # Test the pattern on a sample string
-    string = "AB1234"
-    match = re.match(pattern, string)
-
-    if match:
-        print("Match found!")
-    else:
-        print("Match not found.")
 
 
 
