@@ -1,17 +1,26 @@
-import cv2
-import easyocr
-
-from tools import get_grayscale, thresholding
-
-reader = easyocr.Reader(['en'], recog_network='best_accuracy')  # this needs to run only once to load the model into memory
+from easyocr import easyocr
+from OCR_engine import OCREngine
 
 
-image = cv2.imread('data/LD_05.jpg')
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)[1]
+class EasyOCR(OCREngine):
+    def __init__(self, lang_list, rec_network=None):
+        if rec_network is None:
+            self.reader = easyocr.Reader(lang_list)
+        else:
+            self.reader = easyocr.Reader(lang_list, recog_network=rec_network)
 
-result = reader.readtext(image)
+    def get_data(self, image_path):
+        return self.reader.readtext(image_path)
 
-for res in result:
-    print(res[1])
+    def get_text(self, image_path):
+        result = self.reader.readtext(image_path)
+        return [res[1] for res in result]
+
+    def get_boxes(self, image_path: str):
+        result = self.reader.readtext(image_path)
+        return [res[0] for res in result]
+
+    def get_text_with_prob(self, image_path):
+        result = self.reader.readtext(image_path)
+        return [(res[1], res[2]) for res in result]
 

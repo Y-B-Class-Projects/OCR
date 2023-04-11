@@ -4,12 +4,42 @@ opt.select_data: ['train']
 opt.batch_ratio: ['1']
 --------------------------------------------------------------------------------
 dataset_root:    all_data	 dataset: train
-sub-directory:	/train	 num samples: 24000
-num total samples of train: 24000 x 1.0 (total_data_usage_ratio) = 24000
-num samples of train per batch: 32 x 1.0 (batch_ratio) = 32
+sub-directory:	/train	 num samples: 90000
+num total samples of train: 90000 x 1.0 (total_data_usage_ratio) = 90000
+num samples of train per batch: 16 x 1.0 (batch_ratio) = 16
 --------------------------------------------------------------------------------
-Total_batch_size: 32 = 32
+Total_batch_size: 16 = 16
 --------------------------------------------------------------------------------
 dataset_root:    all_data/test	 dataset: /
-sub-directory:	/.	 num samples: 6000
+sub-directory:	/.	 num samples: 10000
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+dataset_root: all_data
+opt.select_data: ['train']
+opt.batch_ratio: ['1']
+--------------------------------------------------------------------------------
+dataset_root:    all_data	 dataset: train
+sub-directory:	/train	 num samples: 90000
+num total samples of train: 90000 x 1.0 (total_data_usage_ratio) = 90000
+num samples of train per batch: 16 x 1.0 (batch_ratio) = 16
+--------------------------------------------------------------------------------
+Total_batch_size: 16 = 16
+--------------------------------------------------------------------------------
+dataset_root:    all_data/test	 dataset: /
+sub-directory:	/.	 num samples: 10000
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+dataset_root: data
+opt.select_data: ['train']
+opt.batch_ratio: ['1']
+--------------------------------------------------------------------------------
+dataset_root:    data	 dataset: train
+sub-directory:	/train	 num samples: 135000
+num total samples of train: 135000 x 1.0 (total_data_usage_ratio) = 135000
+num samples of train per batch: 16 x 1.0 (batch_ratio) = 16
+--------------------------------------------------------------------------------
+Total_batch_size: 16 = 16
+--------------------------------------------------------------------------------
+dataset_root:    data/test	 dataset: /
+sub-directory:	/.	 num samples: 15000
 --------------------------------------------------------------------------------
