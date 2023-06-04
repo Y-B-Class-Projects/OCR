@@ -11,7 +11,7 @@ image = tools.process_image("data/29B1-479.82.jpg")[0]
 height, width, _ = image.shape
 
 result = reader.get_data(image)
-common_pixel = tools.find_most_common_pixel(image)
+common_pixel = [255, 255, 255]
 img_color = Image.new('RGB', (width, height), tuple(common_pixel))
 
 f, (ax1, ax2) = plt.subplots(1, 2)
