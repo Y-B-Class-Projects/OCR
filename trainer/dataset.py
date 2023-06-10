@@ -4,7 +4,7 @@ import re
 import six
 import math
 import torch
-import pandas  as pd
+import pandas as pd
 
 from natsort import natsorted
 from PIL import Image
@@ -13,18 +13,20 @@ from torch.utils.data import Dataset, ConcatDataset, Subset
 from torch._utils import _accumulate
 import torchvision.transforms as transforms
 
+
 def contrast_grey(img):
     high = np.percentile(img, 90)
-    low  = np.percentile(img, 10)
-    return (high-low)/(high+low), high, low
+    low = np.percentile(img, 10)
+    return (high - low) / (high + low), high, low
 
-def adjust_contrast_grey(img, target = 0.4):
+
+def adjust_contrast_grey(img, target=0.4):
     contrast, high, low = contrast_grey(img)
     if contrast < target:
         img = img.astype(int)
-        ratio = 200./(high-low)
-        img = (img - low + 25)*ratio
-        img = np.maximum(np.full(img.shape, 0) ,np.minimum(np.full(img.shape, 255), img)).astype(np.uint8)
+        ratio = 200. / (high - low)
+        img = (img - low + 25) * ratio
+        img = np.maximum(np.full(img.shape, 0), np.minimum(np.full(img.shape, 255), img)).astype(np.uint8)
     return img
 
 
@@ -41,10 +43,12 @@ class Batch_Balanced_Dataset(object):
         print(dashed_line)
         log.write(dashed_line + '\n')
         print(f'dataset_root: {opt.train_data}\nopt.select_data: {opt.select_data}\nopt.batch_ratio: {opt.batch_ratio}')
-        log.write(f'dataset_root: {opt.train_data}\nopt.select_data: {opt.select_data}\nopt.batch_ratio: {opt.batch_ratio}\n')
+        log.write(
+            f'dataset_root: {opt.train_data}\nopt.select_data: {opt.select_data}\nopt.batch_ratio: {opt.batch_ratio}\n')
         assert len(opt.select_data) == len(opt.batch_ratio)
 
-        _AlignCollate = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD, contrast_adjust = opt.contrast_adjust)
+        _AlignCollate = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD,
+                                     contrast_adjust=opt.contrast_adjust)
         self.data_loader_list = []
         self.dataloader_iter_list = []
         batch_size_list = []
@@ -77,7 +81,7 @@ class Batch_Balanced_Dataset(object):
             _data_loader = torch.utils.data.DataLoader(
                 _dataset, batch_size=_batch_size,
                 shuffle=True,
-                num_workers=int(opt.workers), #prefetch_factor=2,persistent_workers=True,
+                num_workers=int(opt.workers),  # prefetch_factor=2,persistent_workers=True,
                 collate_fn=_AlignCollate, pin_memory=True)
             self.data_loader_list.append(_data_loader)
             self.dataloader_iter_list.append(iter(_data_loader))
@@ -120,7 +124,7 @@ def hierarchical_dataset(root, opt, select_data='/'):
     dataset_log = f'dataset_root:    {root}\t dataset: {select_data[0]}'
     print(dataset_log)
     dataset_log += '\n'
-    for dirpath, dirnames, filenames in os.walk(root+'/'):
+    for dirpath, dirnames, filenames in os.walk(root + '/'):
         if not dirnames:
             select_flag = False
             for selected_d in select_data:
@@ -139,6 +143,7 @@ def hierarchical_dataset(root, opt, select_data='/'):
 
     return concatenated_dataset, dataset_log
 
+
 class OCRDataset(Dataset):
 
     def __init__(self, root, opt):
@@ -146,7 +151,8 @@ class OCRDataset(Dataset):
         self.root = root
         self.opt = opt
         print(root)
-        self.df = pd.read_csv(os.path.join(root,'labels.csv'), sep='^([^,]+),', engine='python', usecols=['filename', 'words'], keep_default_na=False)
+        self.df = pd.read_csv(os.path.join(root, 'labels.csv'), sep='^([^,]+),', engine='python',
+                              usecols=['filename', 'words'], keep_default_na=False, encoding='utf-8-sig')
         self.nSamples = len(self.df)
 
         if self.opt.data_filtering_off:
@@ -154,7 +160,7 @@ class OCRDataset(Dataset):
         else:
             self.filtered_index_list = []
             for index in range(self.nSamples):
-                label = self.df.at[index,'words']
+                label = self.df.at[index, 'words']
                 try:
                     if len(label) > self.opt.batch_max_length:
                         continue
@@ -171,9 +177,9 @@ class OCRDataset(Dataset):
 
     def __getitem__(self, index):
         index = self.filtered_index_list[index]
-        img_fname = self.df.at[index,'filename']
+        img_fname = self.df.at[index, 'filename']
         img_fpath = os.path.join(self.root, img_fname)
-        label = self.df.at[index,'words']
+        label = self.df.at[index, 'words']
 
         if self.opt.rgb:
             img = Image.open(img_fpath).convert('RGB')  # for color image
@@ -188,6 +194,7 @@ class OCRDataset(Dataset):
         label = re.sub(out_of_char, '', label)
 
         return (img, label)
+
 
 class ResizeNormalize(object):
 
@@ -225,7 +232,7 @@ class NormalizePAD(object):
 
 class AlignCollate(object):
 
-    def __init__(self, imgH=32, imgW=100, keep_ratio_with_pad=False, contrast_adjust = 0.):
+    def __init__(self, imgH=32, imgW=100, keep_ratio_with_pad=False, contrast_adjust=0.):
         self.imgH = imgH
         self.imgW = imgW
         self.keep_ratio_with_pad = keep_ratio_with_pad
@@ -247,7 +254,7 @@ class AlignCollate(object):
                 #### augmentation here - change contrast
                 if self.contrast_adjust > 0:
                     image = np.array(image.convert("L"))
-                    image = adjust_contrast_grey(image, target = self.contrast_adjust)
+                    image = adjust_contrast_grey(image, target=self.contrast_adjust)
                     image = Image.fromarray(image, 'L')
 
                 ratio = w / float(h)

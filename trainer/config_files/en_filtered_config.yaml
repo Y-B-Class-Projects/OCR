@@ -1,6 +1,6 @@
-number: '0123456789'
-symbol: "()-.: "
-lang_char: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+number: ""
+symbol: ""
+lang_char: "0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ €ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 experiment_name: 'en_filtered'
 train_data: 'all_data'
 valid_data: 'all_data/test'
@@ -8,8 +8,8 @@ manualSeed: 1111
 workers: 1
 batch_size: 32 #32
 num_iter: 50000
-valInterval: 2000
-saved_model: '' #'saved_models/en_filtered/iter_300000.pth'
+valInterval: 500
+saved_model: '' #saved_models/en_filtered/english_g2.pth
 FT: False
 optim: False # default is Adadelta
 lr: 1.

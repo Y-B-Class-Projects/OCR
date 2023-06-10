@@ -116,8 +116,7 @@ def process_image(image_path):
     image_path = image_path.lower()
     if image_path.endswith('.tif') or image_path.endswith('.png') or image_path.endswith('.jpg') or image_path.endswith(
             '.jpeg'):
-        image = cv2.imread(image_path)
-        image = cut_image(image)
+        image = cut_image(image_path)
         height, width, channels = image.shape
         new_width = 500  # pixels
         new_height = int(height * (new_width / width))
@@ -133,10 +132,11 @@ def process_image(image_path):
         return None, None, None
 
 
-def cut_image(image):
+def cut_image(image_path):
     e_ocr = EasyOCR(['en'], rec_network='best_accuracy')
+    image = cv2.imread(image_path)
     min_x, min_y, max_x, max_y = image.shape[0], image.shape[1], 0, 0
-    boxs = e_ocr.get_boxes(image)
+    boxs = e_ocr.get_boxes(image_path)
     for box in boxs:
         all_x = [point[0] for point in box]
         all_y = [point[1] for point in box]
@@ -166,3 +166,15 @@ def cut_image(image):
     image_new = cv2.warpPerspective(image, matrix, (image_with, image_height))
 
     return image_new
+
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'

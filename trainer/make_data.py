@@ -18,10 +18,19 @@ from trdg.generators import (
 import tools
 from tools import thresholding
 
-image_count = 30000
+image_count = 50000
 val_percent = 0.2
+ALL_CHARS = []
 
-VI_WORDS = ['Tai trong', 'So cho ngoi', 'Dung tich', 'So nguoi duoc phep cho']
+with open('vi_char.txt', 'r', encoding='utf8') as f:
+    lines = f.readlines()
+    chars = []
+    for line in lines:
+        chars.append(line.strip())
+
+ALL_CHARS = chars
+VI_WORDS = ['Tai', 'trong', 'So', 'cho', 'ngoi', 'Dung', 'tich', 'nguoi', 'duoc', 'phep', 'cho']
+VI_WORDS_ORIGINAL = ['Tải', 'trọng', 'Số', 'chỗ', 'ngồi', 'Dung', 'tích', 'người', 'được', 'phép', 'chở']
 EN_WORDS = ['Seat capacity', 'Capacity', 'Sit']
 
 
@@ -45,11 +54,39 @@ def random_lpr_string():
 
 
 def random_vi_string():
-    return secrets.choice(VI_WORDS) + ':'
+    st = secrets.choice(VI_WORDS)
+    if secrets.randbelow(2):
+        st = '(' + st
+    if secrets.randbelow(2):
+        st += ')'
+    if secrets.randbelow(2):
+        st += ':'
+
+    return st
 
 
 def random_en_string():
-    return '(' + secrets.choice(EN_WORDS) + '):'
+    st = secrets.choice(EN_WORDS)
+    if secrets.randbelow(2):
+        st = '(' + st
+    if secrets.randbelow(2):
+        st += ')'
+    if secrets.randbelow(2):
+        st += ':'
+
+    return st
+
+
+def random_vi_random_string():
+    st = rstr.xeger(r'[A-Z]{2,3} \d{2,3} [A-Z]{2,3}')
+    if secrets.randbelow(2):
+        st = '(' + st
+    if secrets.randbelow(2):
+        st += ')'
+    if secrets.randbelow(2):
+        st += ':'
+
+    return st
 
 
 def get_generator(def_random_string, fonts, images_count):
@@ -62,7 +99,7 @@ def get_generator(def_random_string, fonts, images_count):
                                 distorsion_type=0,
                                 background_type=3,
                                 count=images_count,
-                                size=100,
+                                size=49,
                                 character_spacing=0,
                                 margins=(10, 10, 10, 10),
                                 text_color="#2d3238")
@@ -73,21 +110,19 @@ def create_data(count, dir_path, generators):
     for i in tqdm(range(count)):
         generator = secrets.choice(generators)
         image, words = generator.next()
+        if words in VI_WORDS_ORIGINAL:
+            words = VI_WORDS[VI_WORDS_ORIGINAL.index(words)]
         file_name = str(i).zfill(5) + '.png'
         file_path = os.path.join(dir_path, file_name)
-        image = np.array(image)
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-
-        image_np = np.asarray(image)
-        # Define the list of augmentations to apply
+        image_np = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         augmentations = [
             iaa.Resize({"height": (0.8, 1.0), "width": (0.5, 1.0)}),
             iaa.Cutout(nb_iterations=1, fill_mode="constant", cval=255, size=0.05),
             iaa.Dropout(p=(0, 0.01)),  # randomly set pixels to zero
-            iaa.GaussianBlur(sigma=(0.0, 1.5)),  # blur images
+            iaa.GaussianBlur(sigma=(0.8, 1.2)),  # blur images
             iaa.AdditiveGaussianNoise(scale=(0, 0.01 * 255)),  # add Gaussian noise with a scale of 0 to 0.5*255
             iaa.PerspectiveTransform(scale=(0.01, 0.03)),
-            iaa.Multiply(mul=(0.5, 1.5))  # multiply the image by a value ranging from 0.5 to 1.5
+            iaa.Multiply(mul=(0.8, 1.2))  # multiply the image by a value ranging from 0.5 to 1.5
         ]
 
         # Define an imgaug augmentation pipeline using the list of augmentations
@@ -99,7 +134,7 @@ def create_data(count, dir_path, generators):
         cv2.imwrite(file_path, augmented_image)
         df.loc[len(df.index)] = [file_name, words]
 
-    df.to_csv(dir_path + '/labels.csv', index=False)
+    df.to_csv(dir_path + '/labels.csv', encoding='utf-8-sig', header=['filename', 'words'], index=False)
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
