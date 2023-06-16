@@ -1,22 +1,40 @@
 import datetime
-import math
 from math import ceil
 from pathlib import Path
 from prettytable import PrettyTable
 import os
 from tqdm import tqdm
-import tools
-from easyocr_imp import EasyOCR
-from my_dictionary import MyDictionary
-from our_ocr_engine import OurOcrEngine
-from tools import bcolors, is_license_plate
-import OCR_engine
+from OcrEngines.OurOCR import OurOcr
+from tools import bcolors, is_license_plate, process_image
+from OcrEngines.EasyOcrImp import EasyOCR
+from OcrEngines.Pytesseract import Pytesseract
+from OcrEngines import OCR_engine
+
+
+class OcrResultDictionary:
+    def __init__(self):
+        self.dict = {}
+
+    def add_item(self, key, val):
+        if key in self.dict:
+            prev_val = self.dict[key]
+            val += prev_val
+        self.dict[key] = val
+
+    def get_max_item(self):
+        if len(self.dict) > 0:
+            return max(self.dict, key=self.dict.get)
+        else:
+            return "-------"
+
+    def reset(self):
+        self.dict = {}
 
 
 class OcrEngineBenchmark:
     def __init__(self, ocr_engine):  # type: (OCR_engine) -> None
         self.instance = ocr_engine
-        self.results = MyDictionary()
+        self.results = OcrResultDictionary()
         self.true_count = 0
 
     def get_ocr_results(self, image):
@@ -62,7 +80,7 @@ class Benchmark:
         for image in tqdm(os.listdir(self.images_path)):
             engines_results = []
             true_value = Path(image).stem  # get filename without extension
-            processed_images = tools.process_image(self.images_path + image)
+            processed_images = process_image(self.images_path + image)
             for ocr_engine in self.ocr_engines:  # type: OcrEngineBenchmark
                 engines_results.append(ocr_engine.run(processed_images, true_value))
 
@@ -72,7 +90,7 @@ class Benchmark:
 
         rates = []
         for ocr_engine in self.ocr_engines:
-            rates.append(math.ceil(ocr_engine.true_count / len(os.listdir(self.images_path))*100))
+            rates.append(ceil(ocr_engine.true_count / len(os.listdir(self.images_path)) * 100))
         rates.append("")
         self.table.add_row(rates)
 
@@ -82,20 +100,18 @@ class Benchmark:
 
 if __name__ == '__main__':
     start_time = datetime.datetime.now()
-
     # create benchmark
     benchmark = Benchmark()
-
     # create engines
-    our_engine = OurOcrEngine(['en'])
+    our_engine = OurOcr(['en'])
     easyocr_engine = EasyOCR(['en'])
-
+    pytesseract_engine = Pytesseract()
     # add the engines
     benchmark.add_engine(our_engine, "Our Engine")
     benchmark.add_engine(easyocr_engine, "EasyOCR Engine")
-
+    benchmark.add_engine(pytesseract_engine, "Pytesseract Engine")
+    # run the benchmark
     benchmark.run('data/')
-
     benchmark.print_table()
-
+    # print total time
     print("Total time:", datetime.datetime.now() - start_time)

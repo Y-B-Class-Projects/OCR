@@ -3,7 +3,7 @@ from cv2 import cv2
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
 import tools
-from easyocr_imp import EasyOCR
+from OcrEngines.EasyOcrImp import EasyOCR
 
 reader = EasyOCR(['en'], rec_network='best_accuracy')
 

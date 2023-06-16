@@ -2,7 +2,7 @@ from tools import process_image
 
 if __name__ == '__main__':
 
-    from easyocr_imp import EasyOCR
+    from OcrEngines.EasyOcrImp import EasyOCR
 
     e_ocr = EasyOCR(['en'], rec_network='best_accuracy')
 

@@ -1,12 +1,22 @@
 import re
-
+import OcrEngines
 import cv2
 import imutils
 import numpy as np
 from skimage.filters import gaussian, threshold_otsu
 from skimage.feature import canny
 from skimage.transform import probabilistic_hough_line, rotate
-from easyocr_imp import EasyOCR
+
+
+class Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
 
 
 # get grayscale image
@@ -125,16 +135,16 @@ def process_image(image_path):
         rotation_angle = deskew(image)
         image = imutils.rotate(image, angle=rotation_angle)
         gray = get_grayscale(image)
-        without_red = remove_red(image)
+        without_red_01, without_red_02, without_red_03 = remove_red(image)
 
-        return image, gray, without_red
+        return image, gray, without_red_02
     else:
         print('Invalid image format')
         return None, None, None
 
 
 def cut_image(image_path):
-    e_ocr = EasyOCR(['en'], rec_network='best_accuracy')
+    e_ocr = OcrEngines.EasyOcrImp.EasyOCR(['en'], rec_network='best_accuracy')
     image = cv2.imread(image_path)
     min_x, min_y, max_x, max_y = image.shape[0], image.shape[1], 0, 0
     boxs = e_ocr.get_boxes(image_path)
@@ -181,27 +191,27 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-def remove_red(image):
-    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    # lower red
-    lower_red = np.array([0, 25, 50])
-    upper_red = np.array([10, 255, 255])
-    # upper red
-    lower_red2 = np.array([150, 25, 50])
-    upper_red2 = np.array([180, 255, 255])
-
-    mask = cv2.inRange(hsv, lower_red, upper_red)
-    mask = cv2.bitwise_not(mask)
-    mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
-    mask2 = cv2.bitwise_not(mask2)
-    mask3 = cv2.bitwise_and(mask, mask2)
-
-    image[mask3 == 0] = (218, 211, 194)
-
-    image1 = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    _, image1 = cv2.threshold(image1, 200, 255, cv2.THRESH_OTSU)
-
-    return image1
+# def remove_red(image):
+#     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+#     # lower red
+#     lower_red = np.array([0, 25, 50])
+#     upper_red = np.array([10, 255, 255])
+#     # upper red
+#     lower_red2 = np.array([150, 25, 50])
+#     upper_red2 = np.array([180, 255, 255])
+#
+#     mask = cv2.inRange(hsv, lower_red, upper_red)
+#     mask = cv2.bitwise_not(mask)
+#     mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
+#     mask2 = cv2.bitwise_not(mask2)
+#     mask3 = cv2.bitwise_and(mask, mask2)
+#
+#     image[mask3 == 0] = (218, 211, 194)
+#
+#     image1 = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+#     _, image1 = cv2.threshold(image1, 200, 255, cv2.THRESH_OTSU)
+#
+#     return image1
 
 
 def is_license_plate(txt):
