@@ -81,7 +81,7 @@ class Singleton(type):
         return cls._instances[cls]
 
 
-class EasyOCR(metaclass=Singleton):
+class EasyOCR(OCREngine, metaclass=Singleton):
     def __init__(self, lang_list, rec_network=None):
         print('EasyOCR init', lang_list, rec_network)
         if rec_network is None:

@@ -49,12 +49,15 @@ class Benchmark:
     def __init__(self):
         self.images_path = None
         self.ocr_engines = []  # type: [OcrEngineBenchmark]
-        self.table = PrettyTable(['our_result', 'easyocr_result', 'True Value'])
+        self.ocr_engines_names = []
+        self.table = None
 
-    def add_engine(self, ocr_engine):
+    def add_engine(self, ocr_engine, ocr_name):
+        self.ocr_engines_names.append(ocr_name)
         self.ocr_engines.append(OcrEngineBenchmark(ocr_engine))
 
     def run(self, path):
+        self.table = PrettyTable(self.ocr_engines_names + ["True Value"])
         self.images_path = path
         for image in tqdm(os.listdir(self.images_path)):
             engines_results = []
@@ -88,8 +91,8 @@ if __name__ == '__main__':
     easyocr_engine = EasyOCR(['en'])
 
     # add the engines
-    benchmark.add_engine(our_engine)
-    benchmark.add_engine(easyocr_engine)
+    benchmark.add_engine(our_engine, "Our Engine")
+    benchmark.add_engine(easyocr_engine, "EasyOCR Engine")
 
     benchmark.run('data/')
 
