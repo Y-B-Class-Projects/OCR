@@ -1,95 +1,98 @@
 import datetime
-import os
-import re
+import math
 from math import ceil
-
-from PIL import Image
-from cv2 import cv2
 from pathlib import Path
 from prettytable import PrettyTable
 import os
-
+from tqdm import tqdm
 import tools
+from easyocr_imp import EasyOCR
 from my_dictionary import MyDictionary
-from tools import bcolors
+from our_ocr_engine import OurOcrEngine
+from tools import bcolors, is_license_plate
+import OCR_engine
 
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
-import easyocr
+class OcrEngineBenchmark:
+    def __init__(self, ocr_engine):  # type: (OCR_engine) -> None
+        self.instance = ocr_engine
+        self.results = MyDictionary()
+        self.true_count = 0
 
-start_time = datetime.datetime.now()
+    def get_ocr_results(self, image):
+        return self.instance.get_text_with_prob(image)
 
-plate = r"(\d{2}[A-Z]-\d{3}\.\d{2})|" \
-        r"(\d{2}[A-Z]{2}-\d{3}\.\d{2})|" \
-        r"(\d{2}-[A-Z]\d{4}\.\d{2})|" \
-        r"(\d{2}-[A-Z]{2}\d{3}\.\d{2})|" \
-        r"(\d{2}[A-Z]-\d{3})|" \
-        r"(\d{2}[A-Z]{2}-\d{3})|" \
-        r"(\d{2}-[A-Z]\d{5})|" \
-        r"(\d{2}-[A-Z]{2}\d{4})|" \
-        r"(\d{2}[A-Z]\d-\d{4})|" \
-        r"(\d{2}[A-Z]\d-\d{3}\.\d{2})"
+    def add_result(self, text, confidence):
+        self.results.add_item(text, confidence)
 
-our_results = MyDictionary()
-easyocr_results = MyDictionary()
+    def reset_results(self):
+        self.results.reset()
 
-our_count = 0
-easyocr_count = 0
+    def run(self, processed_images, true_value):
+        self.reset_results()
+        for processed_image in processed_images:
+            for result in self.get_ocr_results(processed_image):
+                if result is not None:
+                    text, confidence = result
+                    if is_license_plate(text):
+                        self.add_result(text, confidence)
 
-our_reader = easyocr.Reader(['en'], recog_network='best_accuracy')
-easyocr_reader = easyocr.Reader(['en'])
+        result = self.results.get_max_item()
+        if result == true_value:
+            self.true_count += 1
+            return bcolors.OKGREEN + "`" + result + "`" + bcolors.ENDC
+        else:
+            return bcolors.FAIL + "`" + result + "`" + bcolors.ENDC
 
-t = PrettyTable(['origin', 'gray', 'remove red_1', 'our_result', 'easyocr_result', 'True Value'])
 
-for im in os.listdir('data'):
-    true_val = Path(im).stem
-    images = tools.process_image('data/' + im)
+class Benchmark:
+    def __init__(self):
+        self.images_path = None
+        self.ocr_engines = []  # type: [OcrEngineBenchmark]
+        self.table = PrettyTable(['our_result', 'easyocr_result', 'True Value'])
 
-    table_line = []
+    def add_engine(self, ocr_engine):
+        self.ocr_engines.append(OcrEngineBenchmark(ocr_engine))
 
-    our_results.reset()
-    easyocr_results.reset()
+    def run(self, path):
+        self.images_path = path
+        for image in tqdm(os.listdir(self.images_path)):
+            engines_results = []
+            true_value = Path(image).stem  # get filename without extension
+            processed_images = tools.process_image(self.images_path + image)
+            for ocr_engine in self.ocr_engines:  # type: OcrEngineBenchmark
+                engines_results.append(ocr_engine.run(processed_images, true_value))
 
-    for image in images:
-        line = []
-        results = our_reader.readtext(image)
-        for res in results:
-            if res is not None:
-                _, txt, conf = res
-                if re.match(plate, txt):
-                    our_results.add_item(txt, conf)
-                    line.append(txt)
-        table_line.append(', '.join(line))
+            # add results to table
+            engines_results.append(true_value)
+            self.table.add_row(engines_results)
 
-    our_result = our_results.get_max_item()
-    if our_result == true_val:
-        table_line.append(bcolors.OKGREEN + "`" + our_result + "`" + bcolors.ENDC)
-        our_count += 1
-    else:
-        table_line.append(bcolors.FAIL + "`" + our_result + "`" + bcolors.ENDC)
+        rates = []
+        for ocr_engine in self.ocr_engines:
+            rates.append(math.ceil(ocr_engine.true_count / len(os.listdir(self.images_path))*100))
+        rates.append("")
+        self.table.add_row(rates)
 
-    for image in images:
-        results = easyocr_reader.readtext(image)
-        for res in results:
-            if res is not None:
-                _, txt, conf = res
-                if re.match(plate, txt):
-                    easyocr_results.add_item(txt, conf)
+    def print_table(self):
+        print(self.table)
 
-    easyocr_result = easyocr_results.get_max_item()
-    if easyocr_result == true_val:
-        table_line.append(bcolors.OKGREEN + "`" + easyocr_result + "`" + bcolors.ENDC)
-        easyocr_count += 1
-    else:
-        table_line.append(bcolors.FAIL + "`" + easyocr_result + "`" + bcolors.ENDC)
 
-    table_line.append(true_val)
-    t.add_row(table_line)
+if __name__ == '__main__':
+    start_time = datetime.datetime.now()
 
-our_rate = str(ceil((our_count / len(os.listdir('data'))) * 100)) + "%"
-easyocr_rate = str(ceil((easyocr_count / len(os.listdir('data'))) * 100)) + "%"
-t.add_row(["", "", "", our_rate, easyocr_rate, ""])
+    # create benchmark
+    benchmark = Benchmark()
 
-print(t)
+    # create engines
+    our_engine = OurOcrEngine(['en'])
+    easyocr_engine = EasyOCR(['en'])
 
-print("Total time:", datetime.datetime.now() - start_time)
+    # add the engines
+    benchmark.add_engine(our_engine)
+    benchmark.add_engine(easyocr_engine)
+
+    benchmark.run('data/')
+
+    benchmark.print_table()
+
+    print("Total time:", datetime.datetime.now() - start_time)

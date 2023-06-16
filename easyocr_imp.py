@@ -72,8 +72,18 @@ from easyocr import easyocr
 from OCR_engine import OCREngine
 
 
-class EasyOCR(OCREngine):
+class Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class EasyOCR(metaclass=Singleton):
     def __init__(self, lang_list, rec_network=None):
+        print('EasyOCR init', lang_list, rec_network)
         if rec_network is None:
             self.reader = easyocr.Reader(lang_list)
         else:
@@ -93,4 +103,3 @@ class EasyOCR(OCREngine):
     def get_text_with_prob(self, image_path):
         result = self.reader.readtext(image_path)
         return [(res[1], res[2]) for res in result]
-

@@ -1,3 +1,5 @@
+import re
+
 import cv2
 import imutils
 import numpy as np
@@ -114,8 +116,7 @@ def match_template(image, template):
 
 def process_image(image_path):
     image_path = image_path.lower()
-    if image_path.endswith('.tif') or image_path.endswith('.png') or image_path.endswith('.jpg') or image_path.endswith(
-            '.jpeg'):
+    if image_path.endswith(('.tif', '.png', '.jpg', '.jpeg')):
         image = cut_image(image_path)
         height, width, channels = image.shape
         new_width = 500  # pixels
@@ -124,9 +125,9 @@ def process_image(image_path):
         rotation_angle = deskew(image)
         image = imutils.rotate(image, angle=rotation_angle)
         gray = get_grayscale(image)
-        thresh = thresholding(gray)
+        without_red = remove_red(image)
 
-        return image, gray, thresh
+        return image, gray, without_red
     else:
         print('Invalid image format')
         return None, None, None
@@ -178,3 +179,42 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
+
+def remove_red(image):
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    # lower red
+    lower_red = np.array([0, 25, 50])
+    upper_red = np.array([10, 255, 255])
+    # upper red
+    lower_red2 = np.array([150, 25, 50])
+    upper_red2 = np.array([180, 255, 255])
+
+    mask = cv2.inRange(hsv, lower_red, upper_red)
+    mask = cv2.bitwise_not(mask)
+    mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
+    mask2 = cv2.bitwise_not(mask2)
+    mask3 = cv2.bitwise_and(mask, mask2)
+
+    image[mask3 == 0] = (218, 211, 194)
+
+    image1 = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    _, image1 = cv2.threshold(image1, 200, 255, cv2.THRESH_OTSU)
+
+    return image1
+
+
+def is_license_plate(txt):
+    # regex for license plate
+    plate = r"(\d{2}[A-Z]-\d{3}\.\d{2})|" \
+            r"(\d{2}[A-Z]{2}-\d{3}\.\d{2})|" \
+            r"(\d{2}-[A-Z]\d{4}\.\d{2})|" \
+            r"(\d{2}-[A-Z]{2}\d{3}\.\d{2})|" \
+            r"(\d{2}[A-Z]-\d{3})|" \
+            r"(\d{2}[A-Z]{2}-\d{3})|" \
+            r"(\d{2}-[A-Z]\d{5})|" \
+            r"(\d{2}-[A-Z]{2}\d{4})|" \
+            r"(\d{2}[A-Z]\d-\d{4})|" \
+            r"(\d{2}[A-Z]\d-\d{3}\.\d{2})"
+
+    return re.match(plate, txt)

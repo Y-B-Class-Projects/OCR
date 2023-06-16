@@ -358,3 +358,108 @@ Total_batch_size: 32 = 32
 dataset_root:    all_data/test	 dataset: /
 sub-directory:	/.	 num samples: 5547
 --------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+dataset_root: all_data
+opt.select_data: ['train']
+opt.batch_ratio: ['1']
+--------------------------------------------------------------------------------
+dataset_root:    all_data	 dataset: train
+sub-directory:	/train	 num samples: 24000
+num total samples of train: 24000 x 1.0 (total_data_usage_ratio) = 24000
+num samples of train per batch: 32 x 1.0 (batch_ratio) = 32
+--------------------------------------------------------------------------------
+Total_batch_size: 32 = 32
+--------------------------------------------------------------------------------
+dataset_root:    all_data/test	 dataset: /
+sub-directory:	/.	 num samples: 6000
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+dataset_root: all_data
+opt.select_data: ['train']
+opt.batch_ratio: ['1']
+--------------------------------------------------------------------------------
+dataset_root:    all_data	 dataset: train
+sub-directory:	/train	 num samples: 40000
+num total samples of train: 40000 x 1.0 (total_data_usage_ratio) = 40000
+num samples of train per batch: 32 x 1.0 (batch_ratio) = 32
+--------------------------------------------------------------------------------
+Total_batch_size: 32 = 32
+--------------------------------------------------------------------------------
+dataset_root:    all_data/test	 dataset: /
+sub-directory:	/.	 num samples: 10000
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+dataset_root: all_data
+opt.select_data: ['train']
+opt.batch_ratio: ['1']
+--------------------------------------------------------------------------------
+dataset_root:    all_data	 dataset: train
+sub-directory:	/train	 num samples: 240000
+num total samples of train: 240000 x 1.0 (total_data_usage_ratio) = 240000
+num samples of train per batch: 32 x 1.0 (batch_ratio) = 32
+--------------------------------------------------------------------------------
+Total_batch_size: 32 = 32
+--------------------------------------------------------------------------------
+dataset_root:    all_data/test	 dataset: /
+sub-directory:	/.	 num samples: 60000
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+dataset_root: all_data
+opt.select_data: ['train']
+opt.batch_ratio: ['1']
+--------------------------------------------------------------------------------
+dataset_root:    all_data	 dataset: train
+sub-directory:	/train	 num samples: 240000
+num total samples of train: 240000 x 1.0 (total_data_usage_ratio) = 240000
+num samples of train per batch: 32 x 1.0 (batch_ratio) = 32
+--------------------------------------------------------------------------------
+Total_batch_size: 32 = 32
+--------------------------------------------------------------------------------
+dataset_root:    all_data/test	 dataset: /
+sub-directory:	/.	 num samples: 60000
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+dataset_root: all_data
+opt.select_data: ['train']
+opt.batch_ratio: ['1']
+--------------------------------------------------------------------------------
+dataset_root:    all_data	 dataset: train
+sub-directory:	/train	 num samples: 135000
+num total samples of train: 135000 x 1.0 (total_data_usage_ratio) = 135000
+num samples of train per batch: 32 x 1.0 (batch_ratio) = 32
+--------------------------------------------------------------------------------
+Total_batch_size: 32 = 32
+--------------------------------------------------------------------------------
+dataset_root:    all_data/test	 dataset: /
+sub-directory:	/.	 num samples: 15000
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+dataset_root: all_data
+opt.select_data: ['train']
+opt.batch_ratio: ['1']
+--------------------------------------------------------------------------------
+dataset_root:    all_data	 dataset: train
+sub-directory:	/train	 num samples: 135000
+num total samples of train: 135000 x 1.0 (total_data_usage_ratio) = 135000
+num samples of train per batch: 32 x 1.0 (batch_ratio) = 32
+--------------------------------------------------------------------------------
+Total_batch_size: 32 = 32
+--------------------------------------------------------------------------------
+dataset_root:    all_data/test	 dataset: /
+sub-directory:	/.	 num samples: 15000
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+dataset_root: all_data
+opt.select_data: ['train']
+opt.batch_ratio: ['1']
+--------------------------------------------------------------------------------
+dataset_root:    all_data	 dataset: train
+sub-directory:	/train	 num samples: 135000
+num total samples of train: 135000 x 1.0 (total_data_usage_ratio) = 135000
+num samples of train per batch: 32 x 1.0 (batch_ratio) = 32
+--------------------------------------------------------------------------------
+Total_batch_size: 32 = 32
+--------------------------------------------------------------------------------
+dataset_root:    all_data/test	 dataset: /
+sub-directory:	/.	 num samples: 15000
+--------------------------------------------------------------------------------

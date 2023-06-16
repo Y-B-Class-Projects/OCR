@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-image = cv2.imread('data/LD_09.jpg')
+image = cv2.imread('data/29L5-120.55.jpg')
 
 hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 # lower red

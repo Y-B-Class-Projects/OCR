@@ -319,7 +319,7 @@ class AttnLabelConverter(object):
         output:
             text : the input of attention decoder. [batch_size x (max_length+2)] +1 for [GO] token and +1 for [s] token.
                 text[:, 0] is [GO] token and text is padded with [GO] token after [s] token.
-            length : the length of output of attention decoder, which count [s] token also. [3, 7, ....] [batch_size]
+            length : the length of output of attention decoder, which true_count [s] token also. [3, 7, ....] [batch_size]
         """
         length = [len(s) + 1 for s in text]  # +1 for [s] at end of sentence.
         # batch_max_length = max(length) # this is not allowed for multi-gpu setting
