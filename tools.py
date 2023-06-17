@@ -6,6 +6,7 @@ import numpy as np
 from skimage.filters import gaussian, threshold_otsu
 from skimage.feature import canny
 from skimage.transform import probabilistic_hough_line, rotate
+import OcrEngines.EasyOcrImp
 
 
 class Singleton(type):
@@ -225,6 +226,26 @@ def is_license_plate(txt):
             r"(\d{2}-[A-Z]\d{5})|" \
             r"(\d{2}-[A-Z]{2}\d{4})|" \
             r"(\d{2}[A-Z]\d-\d{4})|" \
-            r"(\d{2}[A-Z]\d-\d{3}\.\d{2})"
-
+            r"(\d{2}[A-Z]\d-\d{3}\.\d{2})|"\
+            r"(11111)|" \
+            r"(\d{2}[A-Z]\d{3}\d{2})|" \
+            r"(\d{2}[A-Z]{2}\d{3}\d{2})|" \
+            r"(\d{2}[A-Z]\d{4}\d{2})|" \
+            r"(\d{2}[A-Z]{2}\d{3}\d{2})|" \
+            r"(\d{2}[A-Z]\d{3})|" \
+            r"(\d{2}[A-Z]{2}\d{3})|" \
+            r"(\d{2}[A-Z]\d{5})|" \
+            r"(\d{2}[A-Z]{2}\d{4})|" \
+            r"(\d{2}[A-Z]\d\d{4})|" \
+            r"(\d{2}[A-Z]\d\d{3}\d{2})"
     return re.match(plate, txt)
+
+
+if __name__ == '__main__':
+    image_path = "C:\\Users\\IZuser\\PycharmProjects\\OCR\\data\\29T2-5553.jpg"
+    images = process_image(image_path)
+    original = cv2.imread(image_path)
+    cv2.imshow("Original", original)
+    cv2.waitKey(0)
+    for i, image in enumerate(images):
+        cv2.imwrite(str(i)+".jpg", image)

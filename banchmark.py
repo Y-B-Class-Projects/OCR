@@ -8,7 +8,9 @@ from OcrEngines.OurOCR import OurOcr
 from tools import bcolors, is_license_plate, process_image
 from OcrEngines.EasyOcrImp import EasyOCR
 from OcrEngines.Pytesseract import Pytesseract
+from OcrEngines.KerasOCR import KerasOCR
 from OcrEngines import OCR_engine
+import cv2
 
 
 class OcrResultDictionary:
@@ -80,7 +82,8 @@ class Benchmark:
         for image in tqdm(os.listdir(self.images_path)):
             engines_results = []
             true_value = Path(image).stem  # get filename without extension
-            processed_images = process_image(self.images_path + image)
+            # processed_images = process_image(self.images_path + image)
+            processed_images = [cv2.imread(self.images_path + image)]
             for ocr_engine in self.ocr_engines:  # type: OcrEngineBenchmark
                 engines_results.append(ocr_engine.run(processed_images, true_value))
 
@@ -106,10 +109,12 @@ if __name__ == '__main__':
     our_engine = OurOcr(['en'])
     easyocr_engine = EasyOCR(['en'])
     pytesseract_engine = Pytesseract()
+    KerasOCR_engine = KerasOCR()
     # add the engines
     benchmark.add_engine(our_engine, "Our Engine")
     benchmark.add_engine(easyocr_engine, "EasyOCR Engine")
     benchmark.add_engine(pytesseract_engine, "Pytesseract Engine")
+    benchmark.add_engine(KerasOCR_engine, "KerasOCR Engine")
     # run the benchmark
     benchmark.run('data/')
     benchmark.print_table()

@@ -116,8 +116,8 @@ def create_data(count, dir_path, generators):
         file_path = os.path.join(dir_path, file_name)
         image_np = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         augmentations = [
-            iaa.Resize({"height": (0.8, 1.0), "width": (0.5, 1.0)}),
-            iaa.Cutout(nb_iterations=1, fill_mode="constant", cval=255, size=0.05),
+            iaa.Resize({"height": (0.8, 1.0), "width": (0.5, 1.0)}),    # resize the image to 80%-100% of original size
+            iaa.Cutout(nb_iterations=1, fill_mode="constant", cval=255, size=0.05),     # randomly remove regions
             iaa.Dropout(p=(0, 0.01)),  # randomly set pixels to zero
             iaa.GaussianBlur(sigma=(0.0, 1.5)),  # blur images
             iaa.AdditiveGaussianNoise(scale=(0, 0.01 * 255)),  # add Gaussian noise with a scale of 0 to 0.5*255
